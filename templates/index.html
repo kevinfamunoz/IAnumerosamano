@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción de Dígitos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .form-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .prediccion {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: green;
+        }
+
+        .canvas-container {
+            margin: 20px 0;
+        }
+
+        #canvas {
+            border: 1px solid #333;
+            background-color: white;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Reconocimiento de Dígitos Escritos a Mano</h1>
+
+    <div class="canvas-container">
+        <canvas id="canvas" width="200" height="200"></canvas>
+        <br>
+        <button onclick="limpiarCanvas()">Limpiar</button>
+        <button onclick="guardarImagen()">Guardar Imagen</button>
+    </div>
+
+    <div class="prediccion" id="resultado">
+        <!-- Aquí se mostrará el resultado de la predicción -->
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let dibujando = false;
+
+        // Función para iniciar el dibujo
+        canvas.addEventListener('mousedown', () => dibujando = true);
+        canvas.addEventListener('mouseup', () => dibujando = false);
+        canvas.addEventListener('mouseleave', () => dibujando = false);
+
+        // Función para dibujar en el canvas
+        canvas.addEventListener('mousemove', (e) => {
+            if (dibujando) {
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(e.offsetX, e.offsetY, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        });
+
+        // Función para limpiar el canvas
+        function limpiarCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('resultado').innerHTML = ''; // Limpiar el resultado
+        }
+
+        // Función para guardar la imagen en el servidor
+        function guardarImagen() {
+            const dataURL = canvas.toDataURL('image/png');
+            fetch('/guardar_imagen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Imagen guardada correctamente.');
+                } else {
+                    alert('Error al guardar la imagen.');
+                }
+            })
+            .catch(error => {
+                console.error('Error al guardar la imagen:', error);
+            });
+        }
+    </script>
+</body>
+</html>

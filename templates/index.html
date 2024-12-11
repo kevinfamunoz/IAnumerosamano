@@ -1,179 +1,396 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predicción de Dígitos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f4f6f7;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .correccion-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        #digito-correcto {
+            width: 70px;
+            padding: 8px;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        #enviar-correccion {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .error-mensaje {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background-color);
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
         }
 
         h1 {
-            color: #333;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 2.5rem;
+            font-weight: 700;
         }
 
         .canvas-container {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
             margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         #canvas {
-            border: 1px solid #333;
+            border: 2px dashed var(--primary-color);
             background-color: white;
+            cursor: crosshair;
+            border-radius: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         button {
-            margin: 10px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #limpiar {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #predecir {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .prediccion {
+            background-color: #e8f4f8;
+            border-radius: 10px;
+            padding: 15px;
             margin-top: 20px;
-            font-size: 1.2em;
-            color: green;
+            font-size: 1.5em;
+            color: var(--primary-color);
+            font-weight: bold;
         }
 
         .feedback {
             margin-top: 20px;
-            text-align: center;
+            background-color: #f1f8e9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .feedback p {
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .feedback-buttons button {
+            background-color: var(--secondary-color);
+            color: white;
         }
 
         #feedback-correcto {
             display: none;
-            margin-top: 10px;
+            color: #2ecc71;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        #feedback-incorrecto {
+            display: none;
+            color: #e74c3c;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
-
 <body>
-    <h1>Reconocimiento de Dígitos Escritos a Mano</h1>
-
-    <div class="canvas-container">
-        <canvas id="canvas" width="400" height="400"></canvas>
-        <br>
-        <button onclick="limpiarCanvas()">Limpiar</button>
-        <button onclick="guardarDibujo()">Guardar y Predecir</button>
+    <div class="container">
+        <h1>Predicción de Dígitos</h1>
+        
+        <div class="canvas-container">
+            <canvas id="canvas" width="280" height="280"></canvas>
+        </div>
+        
+        <div class="button-group">
+            <button id="limpiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+                Limpiar
+            </button>
+            <button id="predecir">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                Predecir
+            </button>
+        </div>
+        
+        <div class="prediccion" id="resultado-prediccion">
+            Dibuja un dígito para comenzar
+        </div>
+        
+        <div class="feedback">
+            <p>¿Es correcta la predicción?</p>
+            <div class="feedback-buttons">
+                <button id="correcto">Sí</button>
+                <button id="incorrecto">No</button>
+            </div>
+            
+            <div id="feedback-correcto">
+                ¡Gracias por confirmar! Ayudas a mejorar nuestro modelo.
+            </div>
+            <div id="feedback-incorrecto">
+                Por favor, indica el dígito correcto:
+                <div class="correccion-container">
+                    <input type="number" id="digito-correcto" min="0" max="9" placeholder="0-9">
+                    <button id="enviar-correccion">Enviar Corrección</button>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="prediccion" id="resultado"></div>
-
-    <div class="feedback">
-        <p>¿Es correcta la predicción?</p>
-        <button onclick="enviarFeedback(true)">Sí</button>
-        <button onclick="mostrarInputEtiqueta()">No</button>
-    </div>
-
-    <div id="feedback-correcto">
-        <input type="number" id="etiqueta-correcta" placeholder="Etiqueta correcta (0-9)">
-        <button onclick="enviarFeedback(false)">Enviar</button>
-    </div>
-
-    <button onclick="reentrenarModelo()">Reentrenar Modelo</button>
 
     <script>
+        // Variables adicionales para corrección
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        let dibujando = false;
-        let ultimaPrediccion = null;
+        const limpiarBtn = document.getElementById('limpiar');
+        const predecirBtn = document.getElementById('predecir');
+        const resultadoPrediccion = document.getElementById('resultado-prediccion');
+        const correctoBtn = document.getElementById('correcto');
+        const incorrectoBtn = document.getElementById('incorrecto');
+        const feedbackCorrecto = document.getElementById('feedback-correcto');
+        const feedbackIncorrecto = document.getElementById('feedback-incorrecto');
+        const digitoCorrectoInput = document.getElementById('digito-correcto');
+        const enviarCorreccionBtn = document.getElementById('enviar-correccion');
+        
+        let prediccionActual = null;
 
-        // Inicializa el fondo blanco del canvas
+        // Configuración inicial del canvas
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 15;
+        ctx.lineCap = 'round';
 
-        // Eventos para el dibujo
-        canvas.addEventListener('mousedown', () => dibujando = true);
-        canvas.addEventListener('mouseup', () => dibujando = false);
-        canvas.addEventListener('mouseleave', () => dibujando = false);
-        canvas.addEventListener('mousemove', (e) => {
-            if (dibujando) {
-                ctx.fillStyle = 'black';
-                ctx.beginPath();
-                ctx.arc(e.offsetX, e.offsetY, 10, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        });
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
 
-        // Limpia el canvas
+        // Eventos de dibujo
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Soporte para dispositivos táctiles
+        canvas.addEventListener('touchstart', handleTouchStart, false);
+        canvas.addEventListener('touchmove', handleTouchMove, false);
+        canvas.addEventListener('touchend', stopDrawing, false);
+
+        // Eventos de los botones
+        limpiarBtn.addEventListener('click', limpiarCanvas);
+        predecirBtn.addEventListener('click', predecirDigito);
+        correctoBtn.addEventListener('click', mostrarFeedbackCorrecto);
+        incorrectoBtn.addEventListener('click', mostrarFeedbackIncorrecto);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            [lastX, lastY] = [x, y];
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            startDrawing(e);
+        }
+
+        function handleTouchMove(e) {
+            draw(e);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
         function limpiarCanvas() {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('resultado').innerText = '';
+            resultadoPrediccion.textContent = 'Dibuja un dígito para comenzar';
+            resultadoPrediccion.style.color = 'var(--primary-color)';
+            feedbackCorrecto.style.display = 'none';
+            feedbackIncorrecto.style.display = 'none';
         }
 
-        // Guarda el dibujo y realiza la predicción
-        function guardarDibujo() {
-            const canvasData = canvas.toDataURL('image/png');
-            fetch('/guardar_imagen', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: canvasData })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        realizarPrediccion();
-                    }
-                });
+        function predecirDigito() {
+            // Aquí iría la lógica de predicción con tu modelo de IA
+            // Por ahora, un ejemplo simulado
+            const digitosSimulados = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            prediccionActual = digitosSimulados[Math.floor(Math.random() * digitosSimulados.length)];
+            
+            resultadoPrediccion.textContent = `Predicción: ${prediccionActual}`;
+            resultadoPrediccion.style.color = 'var(--secondary-color)';
+            
+            // Reiniciar estados de feedback
+            feedbackCorrecto.style.display = 'none';
+            feedbackIncorrecto.style.display = 'none';
+            digitoCorrectoInput.value = '';
         }
 
-        // Realiza la predicción
-        function realizarPrediccion() {
-            fetch('/predict', { method: 'POST' })
-                .then(response => response.json())
-                .then(prediccion => {
-                    if (prediccion.error) {
-                        document.getElementById('resultado').innerText = "Error en la predicción.";
-                    } else {
-                        ultimaPrediccion = prediccion.prediccion;
-                        document.getElementById('resultado').innerText = `Predicción: ${prediccion.prediccion}`;
-                    }
-                });
+        function mostrarFeedbackCorrecto() {
+            // Simular envío de confirmación
+            feedbackCorrecto.style.display = 'block';
+            feedbackIncorrecto.style.display = 'none';
+            
+            // Aquí podrías agregar lógica para enviar retroalimentación positiva
+            console.log(`Confirmación positiva para dígito: ${prediccionActual}`);
         }
 
-        // Muestra el campo para ingresar la etiqueta correcta
-        function mostrarInputEtiqueta() {
-            document.getElementById('feedback-correcto').style.display = 'block';
+        function mostrarFeedbackIncorrecto() {
+            // Mostrar input para corrección
+            feedbackIncorrecto.style.display = 'block';
+            feedbackCorrecto.style.display = 'none';
+            digitoCorrectoInput.focus();
         }
 
-        // Envía el feedback
-        function enviarFeedback(esCorrecto) {
-            const etiquetaCorrecta = esCorrecto ? ultimaPrediccion : document.getElementById('etiqueta-correcta').value;
-
-            fetch('/feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prediccion: ultimaPrediccion,
-                    etiqueta_correcta: parseInt(etiquetaCorrecta)
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("Feedback enviado correctamente.");
-                    } else {
-                        alert("Error al enviar feedback.");
-                    }
-                });
-        }
-
-        // Reentrena el modelo
-        function reentrenarModelo() {
-            fetch('/reentrenar', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("Modelo reentrenado correctamente.");
-                    } else {
-                        alert("Error al reentrenar el modelo.");
-                    }
-                });
-        }
+        // Evento para enviar corrección
+        enviarCorreccionBtn.addEventListener('click', function() {
+            const digitoCorrecto = digitoCorrectoInput.value;
+            
+            // Validar que se haya ingresado un dígito
+            if (digitoCorrecto === '' || isNaN(digitoCorrecto) || 
+                parseInt(digitoCorrecto) < 0 || parseInt(digitoCorrecto) > 9) {
+                // Mostrar mensaje de error
+                if (!document.getElementById('error-mensaje')) {
+                    const errorMensaje = document.createElement('div');
+                    errorMensaje.id = 'error-mensaje';
+                    errorMensaje.className = 'error-mensaje';
+                    errorMensaje.textContent = 'Por favor, ingresa un dígito válido (0-9)';
+                    feedbackIncorrecto.appendChild(errorMensaje);
+                }
+                return;
+            }
+            
+            // Remover mensaje de error si existía
+            const errorMensaje = document.getElementById('error-mensaje');
+            if (errorMensaje) {
+                errorMensaje.remove();
+            }
+            
+            // Lógica para manejar la corrección
+            console.log(`Corrección: Predicción era ${prediccionActual}, correcto es ${digitoCorrecto}`);
+            
+            // Mensaje de agradecimiento
+            feedbackIncorrecto.innerHTML = `
+                <p>Gracias por tu corrección. El dígito correcto es: ${digitoCorrecto}</p>
+            `;
+            
+            // Aquí podrías agregar lógica para entrenar el modelo
+        });
     </script>
 </body>
-
 </html>

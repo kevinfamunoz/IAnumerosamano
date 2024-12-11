@@ -3,27 +3,25 @@ import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import Adam
 from PIL import Image
+import pandas as pd
 
 # Configuración de rutas y carga del modelo
 current_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(current_dir, '..', 'models', 'modelo_cnn_reentrenado.h5')
+feedback_path = os.path.join(current_dir, 'feedback_data.csv')
 
 # Cargar el modelo reentrenado o crear uno nuevo
 try:
     if os.path.exists(model_path):
         model = load_model(model_path)
-        print("✅ Modelo reentrenado cargado correctamente.")
+        print("\u2705 Modelo reentrenado cargado correctamente.")
     else:
         from src.model import crear_modelo
         model = crear_modelo()
         model.save(model_path)
-        print("⚙️ Modelo base creado y guardado como modelo reentrenado.")
+        print("\u2699\ufe0f Modelo base creado y guardado como modelo reentrenado.")
 except Exception as e:
     raise RuntimeError(f"Error al cargar o crear el modelo: {e}")
-
-# Variables para almacenar imágenes y etiquetas incorrectas
-errores_imagenes = []
-errores_etiquetas = []
 
 # Preprocesar la imagen al formato (1, 28, 28, 1)
 def cargar_y_preprocesar_imagen(imagen_ndarray):
@@ -44,49 +42,62 @@ def predecir_imagen(imagen_preprocesada):
         raise ValueError("La imagen preprocesada debe tener el formato (1, 28, 28, 1).")
     prediccion = model.predict(imagen_preprocesada)
     clase_predicha = np.argmax(prediccion)
-    print(f"🎯 Predicción realizada: {clase_predicha}")
+    print(f"\U0001f3af Predicción realizada: {clase_predicha}")
     return clase_predicha
 
-# Guardar imágenes y etiquetas de feedback incorrecto
+# Guardar imágenes y etiquetas de feedback incorrecto en un archivo CSV
 def guardar_feedback_incorrecto(imagen_ndarray, etiqueta_real):
-    """Guarda imágenes y etiquetas incorrectas para el reentrenamiento."""
+    """Guarda imágenes y etiquetas incorrectas en un archivo CSV para el reentrenamiento."""
     if not isinstance(etiqueta_real, int):
         raise ValueError("La etiqueta real debe ser un entero.")
     try:
+        # Preprocesar la imagen y aplanarla para guardar en el CSV
         imagen_procesada = cargar_y_preprocesar_imagen(imagen_ndarray)
-        errores_imagenes.append(imagen_procesada[0])  # Guardar sin dimensión de lote
-        errores_etiquetas.append(etiqueta_real)
-        print(f"❌ Feedback guardado - Etiqueta real: {etiqueta_real}, Total imágenes incorrectas: {len(errores_imagenes)}")
+        imagen_flat = imagen_procesada.flatten()
+
+        # Cargar o crear el archivo CSV de feedback
+        if os.path.exists(feedback_path):
+            feedback_data = pd.read_csv(feedback_path)
+        else:
+            feedback_data = pd.DataFrame(columns=[f"pixel_{i}" for i in range(28 * 28)] + ["etiqueta"])
+
+        # Agregar la nueva fila de feedback
+        nueva_fila = list(imagen_flat) + [etiqueta_real]
+        feedback_data.loc[len(feedback_data)] = nueva_fila
+
+        # Guardar el archivo CSV actualizado
+        feedback_data.to_csv(feedback_path, index=False)
+        print(f"\u274c Feedback guardado - Etiqueta real: {etiqueta_real}, Total registros: {len(feedback_data)}")
     except Exception as e:
-        print(f"⚠️ Error al guardar feedback: {e}")
+        print(f"\u26a0\ufe0f Error al guardar feedback: {e}")
 
 # Reentrenar el modelo con datos de feedback
 def reentrenar_con_errores(epochs=3, batch_size=32):
     """Reentrena el modelo con las imágenes incorrectas si existen y guarda el modelo actualizado."""
-    if not errores_imagenes:
-        print("ℹ️ No hay imágenes incorrectas para reentrenar.")
+    if not os.path.exists(feedback_path):
+        print("\u2139\ufe0f No hay datos de feedback para reentrenar.")
         return
 
     try:
-        print("🔄 Iniciando reentrenamiento con feedback acumulado...")
+        print("\U0001f504 Iniciando reentrenamiento con feedback acumulado...")
 
-        # Convertir los datos de feedback a arrays numpy
-        errores_imagenes_array = np.array(errores_imagenes)
-        errores_etiquetas_array = np.array(errores_etiquetas)
+        # Cargar los datos de feedback desde el CSV
+        feedback_data = pd.read_csv(feedback_path)
+        imagenes = feedback_data.iloc[:, :-1].values.reshape(-1, 28, 28, 1)
+        etiquetas = feedback_data.iloc[:, -1].values
 
         # Recompilar y reentrenar el modelo
         model.compile(optimizer=Adam(learning_rate=0.001),
                       loss='sparse_categorical_crossentropy',
                       metrics=['accuracy'])
-        model.fit(errores_imagenes_array, errores_etiquetas_array,
-                  epochs=epochs, batch_size=batch_size, verbose=1)
+        model.fit(imagenes, etiquetas, epochs=epochs, batch_size=batch_size, verbose=1)
 
         # Guardar el modelo reentrenado
         model.save(model_path)
-        print("✅ Modelo reentrenado y guardado exitosamente.")
+        print("\u2705 Modelo reentrenado y guardado exitosamente.")
 
-        # Limpiar los datos de feedback después de reentrenar
-        errores_imagenes.clear()
-        errores_etiquetas.clear()
+        # Limpiar el archivo de feedback después de reentrenar
+        os.remove(feedback_path)
+        print("\u2714\ufe0f Datos de feedback eliminados después del reentrenamiento.")
     except Exception as e:
-        print(f"⚠️ Error durante el reentrenamiento: {e}")
+        print(f"\u26a0\ufe0f Error durante el reentrenamiento: {e}")

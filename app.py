@@ -2,9 +2,9 @@ import os
 import base64
 import numpy as np
 from flask import Flask, request, render_template, jsonify
-from PIL import Image, ImageOps  # Asegúrate de tener ImageOps importado
+from PIL import Image, ImageOps
 from io import BytesIO
-from src.predict import predecir_imagen, guardar_feedback_incorrecto, reentrenar_con_errores  # Asegúrate de importar las funciones necesarias
+from src.predict import predecir_imagen, guardar_feedback_incorrecto, reentrenar_con_errores  # Importar funciones necesarias
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
@@ -14,36 +14,20 @@ def index():
     # Renderiza la plantilla HTML desde la carpeta templates
     return render_template("index.html")
 
-
 # Preprocesar la imagen para que tenga el formato necesario para el modelo
 def preprocesar_imagen(imagen):
-    # Convertir la imagen a escala de grises y ajustar el contraste
+    """Preprocesa la imagen para ajustarla al formato del modelo."""
     imagen = ImageOps.grayscale(imagen)
     imagen = ImageOps.invert(imagen)  # Invertir colores: fondo blanco, dígito negro
-
-    # Aplicar redimensionado suave
-    imagen = imagen.resize((28, 28), Image.LANCZOS)  # Usar interpolación LANCZOS para mejor calidad
-
-    # Verificar si la imagen sigue completamente en blanco o negro
-    min_val, max_val = np.min(imagen), np.max(imagen)
-    if min_val == max_val:
-        print(f"Advertencia: La imagen está completamente en {('blanco' if min_val == 255 else 'negro')}.")
-        return None
-
-    # Normalizar los valores entre 0 y 1
-    imagen_array = np.array(imagen) / 255.0
-
-    # Aplicar filtro de suavizado si es necesario (opcional)
-    imagen_array = np.clip(imagen_array, 0, 1)
-
-    # Ajustar la forma para el modelo
+    imagen = imagen.resize((28, 28), Image.LANCZOS)  # Redimensionar
+    imagen_array = np.array(imagen) / 255.0  # Normalizar entre 0 y 1
     imagen_array = np.expand_dims(imagen_array, axis=-1)  # Añadir canal de color
     imagen_array = np.expand_dims(imagen_array, axis=0)  # Añadir dimensión de batch
     return imagen_array
 
-# Ruta para guardar la imagen
 @app.route('/guardar_imagen', methods=['POST'])
 def guardar_imagen():
+    """Guarda una imagen enviada en formato Base64 en el servidor."""
     data = request.json
     image_data = data.get('image')
 
@@ -67,11 +51,10 @@ def guardar_imagen():
         print(f"Error al guardar la imagen: {e}")
         return jsonify({"error": "Error al guardar la imagen."}), 500
 
-# Endpoint para la predicción
 @app.route('/predict', methods=['POST'])
 def predict():
+    """Realiza una predicción sobre la imagen guardada."""
     try:
-        # Cargar la imagen guardada desde la carpeta 'uploads'
         image_path = os.path.join('uploads', 'imagen.png')
         imagen = Image.open(image_path)
 
@@ -82,19 +65,16 @@ def predict():
         if image_array is None:
             return jsonify({"error": "La imagen no es válida para la predicción."}), 500
 
-        print("Forma de la imagen preprocesada:", image_array.shape)
-        print("Valor mínimo:", image_array.min(), "Valor máximo:", image_array.max())
-
-        # Hacer la predicción
         prediccion = predecir_imagen(image_array)
         return jsonify({"prediccion": int(prediccion)})
 
     except Exception as e:
         print(f"Error en la predicción: {e}")
         return jsonify({"error": "Error en la predicción."}), 500
-    
+
 @app.route('/feedback', methods=['POST'])
 def feedback():
+    """Recibe feedback sobre predicciones incorrectas."""
     data = request.json
     prediccion = data.get('prediccion')
     etiqueta_correcta = data.get('etiqueta_correcta')
@@ -102,7 +82,6 @@ def feedback():
     if prediccion is None or etiqueta_correcta is None:
         return jsonify({"error": "Datos incompletos."}), 400
 
-    # Cargar la imagen guardada para feedback
     try:
         image_path = os.path.join('uploads', 'imagen.png')
         imagen = Image.open(image_path)
@@ -116,13 +95,13 @@ def feedback():
 
 @app.route('/reentrenar', methods=['POST'])
 def reentrenar():
+    """Reentrena el modelo con los datos de feedback acumulados."""
     try:
         reentrenar_con_errores()
         return jsonify({"success": True, "mensaje": "Modelo reentrenado."})
     except Exception as e:
         print(f"Error al reentrenar modelo: {e}")
         return jsonify({"error": "Error al reentrenar modelo."}), 500
-
 
 # Ejecutar la aplicación
 if __name__ == '__main__':

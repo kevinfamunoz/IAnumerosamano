@@ -63,7 +63,7 @@ def guardar_feedback_incorrecto(imagen_ndarray, etiqueta_real):
 
         # Agregar la nueva fila de feedback
         nueva_fila = list(imagen_flat) + [etiqueta_real]
-        feedback_data.loc[len(feedback_data)] = nueva_fila
+        feedback_data = pd.concat([feedback_data, pd.DataFrame([nueva_fila], columns=feedback_data.columns)], ignore_index=True)
 
         # Guardar el archivo CSV actualizado
         feedback_data.to_csv(feedback_path, index=False)
@@ -83,6 +83,10 @@ def reentrenar_con_errores(epochs=3, batch_size=32):
 
         # Cargar los datos de feedback desde el CSV
         feedback_data = pd.read_csv(feedback_path)
+        if feedback_data.empty:
+            print("\u2139\ufe0f No hay datos de feedback para reentrenar.")
+            return
+
         imagenes = feedback_data.iloc[:, :-1].values.reshape(-1, 28, 28, 1)
         etiquetas = feedback_data.iloc[:, -1].values
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,7 +62,7 @@
         .container {
             background-color: white;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 100%;
             max-width: 500px;
@@ -80,7 +81,7 @@
             border-radius: 10px;
             padding: 15px;
             margin: 20px 0;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         #canvas {
@@ -123,7 +124,7 @@
 
         button:hover {
             transform: translateY(-3px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .prediccion {
@@ -190,40 +191,46 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Predicción de Dígitos</h1>
-        
+
         <div class="canvas-container">
             <canvas id="canvas" width="280" height="280"></canvas>
         </div>
-        
+
         <div class="button-group">
             <button id="limpiar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                 </svg>
                 Limpiar
             </button>
             <button id="predecir">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                 </svg>
                 Predecir
             </button>
         </div>
-        
+
         <div class="prediccion" id="resultado-prediccion">
             Dibuja un dígito para comenzar
         </div>
-        
+
         <div class="feedback">
             <p>¿Es correcta la predicción?</p>
             <div class="feedback-buttons">
                 <button id="correcto">Sí</button>
                 <button id="incorrecto">No</button>
             </div>
-            
+
             <div id="feedback-correcto">
                 ¡Gracias por confirmar! Ayudas a mejorar nuestro modelo.
             </div>
@@ -250,7 +257,7 @@
         const feedbackIncorrecto = document.getElementById('feedback-incorrecto');
         const digitoCorrectoInput = document.getElementById('digito-correcto');
         const enviarCorreccionBtn = document.getElementById('enviar-correccion');
-        
+
         let prediccionActual = null;
 
         // Configuración inicial del canvas
@@ -292,11 +299,11 @@
         function draw(e) {
             if (!isDrawing) return;
             e.preventDefault();
-            
+
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - rect.left;
             const y = (e.clientY || e.touches[0].clientY) - rect.top;
-            
+
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
@@ -331,10 +338,10 @@
             // Por ahora, un ejemplo simulado
             const digitosSimulados = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
             prediccionActual = digitosSimulados[Math.floor(Math.random() * digitosSimulados.length)];
-            
+
             resultadoPrediccion.textContent = `Predicción: ${prediccionActual}`;
             resultadoPrediccion.style.color = 'var(--secondary-color)';
-            
+
             // Reiniciar estados de feedback
             feedbackCorrecto.style.display = 'none';
             feedbackIncorrecto.style.display = 'none';
@@ -345,7 +352,7 @@
             // Simular envío de confirmación
             feedbackCorrecto.style.display = 'block';
             feedbackIncorrecto.style.display = 'none';
-            
+
             // Aquí podrías agregar lógica para enviar retroalimentación positiva
             console.log(`Confirmación positiva para dígito: ${prediccionActual}`);
         }
@@ -358,11 +365,11 @@
         }
 
         // Evento para enviar corrección
-        enviarCorreccionBtn.addEventListener('click', function() {
+        enviarCorreccionBtn.addEventListener('click', function () {
             const digitoCorrecto = digitoCorrectoInput.value;
-            
+
             // Validar que se haya ingresado un dígito
-            if (digitoCorrecto === '' || isNaN(digitoCorrecto) || 
+            if (digitoCorrecto === '' || isNaN(digitoCorrecto) ||
                 parseInt(digitoCorrecto) < 0 || parseInt(digitoCorrecto) > 9) {
                 // Mostrar mensaje de error
                 if (!document.getElementById('error-mensaje')) {
@@ -374,23 +381,54 @@
                 }
                 return;
             }
-            
+
             // Remover mensaje de error si existía
             const errorMensaje = document.getElementById('error-mensaje');
             if (errorMensaje) {
                 errorMensaje.remove();
             }
-            
+
             // Lógica para manejar la corrección
             console.log(`Corrección: Predicción era ${prediccionActual}, correcto es ${digitoCorrecto}`);
-            
+
             // Mensaje de agradecimiento
             feedbackIncorrecto.innerHTML = `
                 <p>Gracias por tu corrección. El dígito correcto es: ${digitoCorrecto}</p>
             `;
-            
-            // Aquí podrías agregar lógica para entrenar el modelo
+
+            // Función para guardar el feedback
+            function guardarFeedback(digitoCorregido) {
+                const feedback = {
+                    prediccion: prediccionActual, // la predicción anterior
+                    digitoCorregido: digitoCorregido, // el dígito corregido
+                    timestamp: new Date().toISOString() // marca temporal
+                };
+
+                // Guardar el feedback en el almacenamiento local
+                let feedbacks = JSON.parse(localStorage.getItem('feedbacks')) || [];
+                feedbacks.push(feedback);
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+
+                console.log("Feedback guardado:", feedback);
+            }
+
+            // Llamar a la función cuando se envíe el feedback
+            enviarCorreccionBtn.addEventListener('click', function () {
+                const digitoCorrecto = digitoCorrectoInput.value.trim();
+
+                if (digitoCorrecto !== '' && !isNaN(digitoCorrecto) &&
+                    parseInt(digitoCorrecto) >= 0 && parseInt(digitoCorrecto) <= 9) {
+
+                    // Guardar el feedback cuando sea válido
+                    guardarFeedback(digitoCorrecto);
+
+                    // Continuar con la retroalimentación como antes
+                    feedbackCorrecto.style.display = 'block';
+                    feedbackIncorrecto.style.display = 'none';
+                }
+            });
         });
     </script>
 </body>
+
 </html>
